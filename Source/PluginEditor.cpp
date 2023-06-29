@@ -11,10 +11,37 @@
 
 //==============================================================================
 ReverbAudioProcessorEditor::ReverbAudioProcessorEditor (ReverbAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+: AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+	mReverbLabel.setColour(juce::Label::textColourId, juce::Colours::black);
+	mReverbLabel.setText("REVERB", juce::NotificationType::dontSendNotification);
+	mReverbLabel.setJustificationType(juce::Justification::centred);
+	addAndMakeVisible(&mReverbLabel);
+	
+	mVolumeSlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+	mVolumeSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxAbove, false, 90, 30);
+	mVolumeSlider.setSkewFactorFromMidPoint(7);
+	mVolumeSlider.setRange(-96, 0, 0.1);
+	mVolumeSlider.setValue(-12);
+	mVolumeSlider.setNumDecimalPlacesToDisplay(1);
+	mVolumeSlider.setColour(juce::Slider::textBoxTextColourId, juce::Colours::black);
+	mVolumeSlider.setTextValueSuffix(" dBFS");
+	mVolumeSlider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+	mVolumeSlider.addListener(this);
+	addAndMakeVisible(&mVolumeSlider);
+	
+	mDelaytimeSlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+	mDelaytimeSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxAbove, false, 80, 30);
+	mDelaytimeSlider.setSkewFactorFromMidPoint(3);
+	mDelaytimeSlider.setRange(50, 2000, 1);
+	mDelaytimeSlider.setValue(500);
+	mDelaytimeSlider.setNumDecimalPlacesToDisplay(0);
+	mDelaytimeSlider.setColour(juce::Slider::textBoxTextColourId, juce::Colours::black);
+	mDelaytimeSlider.setTextValueSuffix(" ms");
+	mDelaytimeSlider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+	mDelaytimeSlider.addListener(this);
+	addAndMakeVisible(&mDelaytimeSlider);
+	
     setSize (400, 300);
 }
 
@@ -22,19 +49,37 @@ ReverbAudioProcessorEditor::~ReverbAudioProcessorEditor()
 {
 }
 
-//==============================================================================
 void ReverbAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.fillAll (juce::Colours::white);
 }
 
 void ReverbAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+	juce::Rectangle<int> bounds = getLocalBounds();
+	
+	juce::FlexBox volumeFlexbox;
+	volumeFlexbox.flexDirection = juce::FlexBox::Direction::row;
+	volumeFlexbox.items.add(juce::FlexItem(mVolumeSlider).withFlex(1));
+	
+	juce::FlexBox delayFlexbox;
+	delayFlexbox.flexDirection = juce::FlexBox::Direction::row;
+	delayFlexbox.items.add(juce::FlexItem(mDelaytimeSlider).withFlex(1));
+	
+	juce::FlexBox groupVolumeAndDelayFlexbox;
+	groupVolumeAndDelayFlexbox.flexDirection = juce::FlexBox::Direction::row;
+	groupVolumeAndDelayFlexbox.items.add(juce::FlexItem(volumeFlexbox).withFlex(1));
+	groupVolumeAndDelayFlexbox.items.add(juce::FlexItem(delayFlexbox).withFlex(1));
+	
+	juce::FlexBox reverbFlexbox;
+	reverbFlexbox.flexDirection = juce::FlexBox::Direction::column;
+	reverbFlexbox.items.add(juce::FlexItem(mReverbLabel).withFlex(2));
+	reverbFlexbox.items.add(juce::FlexItem(groupVolumeAndDelayFlexbox).withFlex(5));
+	
+	reverbFlexbox.performLayout(bounds);
+}
+
+void ReverbAudioProcessorEditor::sliderValueChanged (juce::Slider* slider)
+{
+	
 }
