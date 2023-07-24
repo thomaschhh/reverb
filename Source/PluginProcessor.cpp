@@ -95,6 +95,9 @@ void ReverbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    
+    int delayBufferSize = sampleRate * 2.0;
+    delayBuffer.setSize(getTotalNumOutputChannels(), delayBufferSize);
 }
 
 void ReverbAudioProcessor::releaseResources()
@@ -143,7 +146,10 @@ void ReverbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
+    
+    int bufferSize = buffer.getNumSamples();
+    int delayBufferSize = delayBuffer.getNumSamples();
+    
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
     // Make sure to reset the state if your inner loop is processing
@@ -153,11 +159,58 @@ void ReverbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
+        
+        // Copy input signal to a delay buffer
+        fillBuffer(channel, bufferSize, delayBufferSize, channelData);
+        
+        // Read from the past in the delay buffer, then add back to main buffer
+        readFromBuffer(buffer, delayBuffer, channel, bufferSize, delayBufferSize, channelData);
+        
+        // feeback
+        fillBuffer(channel, bufferSize, delayBufferSize, channelData);
 
-        // ..do something to the data...
+    }
+    
+    writePosition += bufferSize;
+    // ensure to stay in bounds of bufferSize, wrap around in circular buffer
+    writePosition %= delayBufferSize;
+}
+
+void ReverbAudioProcessor::readFromBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData){
+    int readPosition = writePosition - getSampleRate();
+    
+    if (readPosition < 0){
+        readPosition += delayBufferSize;
+    }
+    
+    if (readPosition + bufferSize < delayBufferSize) {
+        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer(channel, readPosition), bufferSize, startGain, endGain);
+    }else{
+        int numSamplesToEnd = delayBufferSize - readPosition;
+        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer (channel, readPosition), numSamplesToEnd, startGain, endGain);
+        
+        auto numSamplesAtStart = bufferSize - numSamplesToEnd;
+        buffer.addFromWithRamp(channel, numSamplesToEnd, delayBuffer.getReadPointer (channel, 0), numSamplesAtStart, startGain, endGain);
     }
 }
 
+void ReverbAudioProcessor::fillBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData){
+    // Check to see if main buffer copies to delay buffer without needing to wrap..
+    if (delayBufferSize > bufferSize + writePosition){
+        
+        // copy main buffer contents to delay buffer
+        delayBuffer.copyFromWithRamp(channel, writePosition, channelData, bufferSize, startGain, endGain);
+    }else{
+        // copy remaining samples without wrapping around
+        int numSamplesToEnd = delayBufferSize - writePosition;
+        delayBuffer.copyFromWithRamp(channel, writePosition, channelData, numSamplesToEnd, startGain, endGain);
+        
+        // start from beginning again
+        int numSamplesAtStart = bufferSize - numSamplesToEnd;
+        delayBuffer.copyFromWithRamp(channel, 0, channelData + numSamplesToEnd, numSamplesAtStart, startGain, endGain);
+        
+    }
+}
 //==============================================================================
 bool ReverbAudioProcessor::hasEditor() const
 {
