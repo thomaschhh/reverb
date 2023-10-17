@@ -19,7 +19,7 @@ ReverbAudioProcessor::ReverbAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), writePosition (0), startGain(0.1f), endGain(0.7f)
 #endif
 {
 }
