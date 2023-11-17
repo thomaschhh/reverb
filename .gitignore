@@ -1,3 +1,11 @@
-**/Builds 
-**/JuceLibraryCode 
+**/build 
 **/.DS_Store
+**/JUCE
+
+# VS Code files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/Launch.json
+!.vscode/extensions.json
+*.code-workspace
