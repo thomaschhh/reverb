@@ -1,3 +1,5 @@
+include(CMakePrintHelpers)
+
 cmake_minimum_required(VERSION 3.15)
 project(Reverb VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
@@ -6,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(JUCE)
 add_subdirectory(Include)
 add_subdirectory(Source)
+
+set(WW_POST_BUILD_INSTALL "SYSTEM")
 
 juce_add_plugin(${PROJECT_NAME}
     COMPANY_NAME wonderwood
@@ -44,3 +48,27 @@ target_link_libraries(${PROJECT_NAME}
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set_directory_properties (PROPERTIES JUCE_COPY_PLUGIN_AFTER_BUILD ON)
+
+    if (WW_POST_BUILD_INSTALL STREQUAL "SYSTEM")
+        set (prefix "/Library/Audio/Plug-Ins")
+    else()
+        set (prefix "$ENV{HOME}/Library/Audio/Plug-Ins")
+    endif()
+
+    set(JUCE_VST3_COPY_DIR "${prefix}/VST3")
+    set(JUCE_AU_COPY_DIR "${prefix}/Components")
+
+endif()
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/Reverb_artefacts/AU/Reverb.component ${JUCE_AU_COPY_DIR}
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/Reverb_artefacts/VST3/Reverb.vst3 ${JUCE_VST3_COPY_DIR}
+)
