@@ -19,7 +19,7 @@ ReverbAudioProcessor::ReverbAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ), writePosition (0), startGain(0.1f), endGain(0.7f)
+                       ), writePositionDelayBuffer (0), startGain(0.1f), endGain(0.7f)
 #endif
 {
 }
@@ -161,53 +161,53 @@ void ReverbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         auto* channelData = buffer.getWritePointer (channel);
         
         // Copy input signal to a delay buffer
-        fillBuffer(channel, bufferSize, delayBufferSize, channelData);
+        fillDelayBuffer(channel, bufferSize, delayBufferSize, channelData);
         
         // Read from the past in the delay buffer, then add back to main buffer
-        readFromBuffer(buffer, delayBuffer, channel, bufferSize, delayBufferSize, channelData);
+        readFromDelayBuffer(buffer, delayBuffer, channel, bufferSize, delayBufferSize, channelData);
         
         // feeback
-        fillBuffer(channel, bufferSize, delayBufferSize, channelData);
+        fillDelayBuffer(channel, bufferSize, delayBufferSize, channelData);
 
     }
     
-    writePosition += bufferSize;
+    writePositionDelayBuffer += bufferSize;
     // ensure to stay in bounds of bufferSize, wrap around in circular buffer
-    writePosition %= delayBufferSize;
+    writePositionDelayBuffer %= delayBufferSize;
 }
 
-void ReverbAudioProcessor::readFromBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData){
-    int readPosition = writePosition - getSampleRate();
+void ReverbAudioProcessor::readFromDelayBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData){
+    int readPositionDelayBuffer = writePositionDelayBuffer - 0.01 * getSampleRate();
     
-    if (readPosition < 0){
-        readPosition += delayBufferSize;
+    if (readPositionDelayBuffer < 0){
+        readPositionDelayBuffer += delayBufferSize;
     }
     
-    if (readPosition + bufferSize < delayBufferSize) {
-        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer(channel, readPosition), bufferSize, startGain, endGain);
+    if (readPositionDelayBuffer + bufferSize < delayBufferSize) {
+        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer(channel, readPositionDelayBuffer), bufferSize, startGain, endGain);
     }else{
-        int numSamplesToEnd = delayBufferSize - readPosition;
-        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer (channel, readPosition), numSamplesToEnd, startGain, endGain);
+        int numSamplesToEndOfDelayBuffer = delayBufferSize - readPositionDelayBuffer;
+        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer (channel, readPositionDelayBuffer), numSamplesToEndOfDelayBuffer, startGain, endGain);
         
-        auto numSamplesAtStart = bufferSize - numSamplesToEnd;
-        buffer.addFromWithRamp(channel, numSamplesToEnd, delayBuffer.getReadPointer (channel, 0), numSamplesAtStart, startGain, endGain);
+        auto numSamplesAtStartOfDelayBuffer = bufferSize - numSamplesToEndOfDelayBuffer;
+        buffer.addFromWithRamp(channel, numSamplesToEndOfDelayBuffer, delayBuffer.getReadPointer (channel, 0), numSamplesAtStartOfDelayBuffer, startGain, endGain);
     }
 }
 
-void ReverbAudioProcessor::fillBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData){
+void ReverbAudioProcessor::fillDelayBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData){
     // Check to see if main buffer copies to delay buffer without needing to wrap..
-    if (delayBufferSize > bufferSize + writePosition){
+    if (delayBufferSize > bufferSize + writePositionDelayBuffer){
         
         // copy main buffer contents to delay buffer
-        delayBuffer.copyFromWithRamp(channel, writePosition, channelData, bufferSize, startGain, endGain);
+        delayBuffer.copyFromWithRamp(channel, writePositionDelayBuffer, channelData, bufferSize, startGain, endGain);
     }else{
         // copy remaining samples without wrapping around
-        int numSamplesToEnd = delayBufferSize - writePosition;
-        delayBuffer.copyFromWithRamp(channel, writePosition, channelData, numSamplesToEnd, startGain, endGain);
+        int numSamplesToEndOfDelayBuffer = delayBufferSize - writePositionDelayBuffer;
+        delayBuffer.copyFromWithRamp(channel, writePositionDelayBuffer, channelData, numSamplesToEndOfDelayBuffer, startGain, endGain);
         
         // start from beginning again
-        int numSamplesAtStart = bufferSize - numSamplesToEnd;
-        delayBuffer.copyFromWithRamp(channel, 0, channelData + numSamplesToEnd, numSamplesAtStart, startGain, endGain);
+        int numSamplesAtStartOfDelayBuffer = bufferSize - numSamplesToEndOfDelayBuffer;
+        delayBuffer.copyFromWithRamp(channel, 0, channelData + numSamplesToEndOfDelayBuffer, numSamplesAtStartOfDelayBuffer, startGain, endGain);
         
     }
 }

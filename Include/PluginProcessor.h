@@ -57,10 +57,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    void fillBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData);
-    void readFromBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData);
+    void fillDelayBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData);
+    void readFromDelayBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData);
     juce::AudioBuffer<float> delayBuffer;
-    int writePosition;
+    int writePositionDelayBuffer;
     float startGain;
     float endGain;
     //==============================================================================
