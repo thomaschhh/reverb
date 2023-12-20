@@ -177,7 +177,7 @@ void ReverbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 }
 
 void ReverbAudioProcessor::readFromDelayBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData){
-    int readPositionDelayBuffer = writePositionDelayBuffer - 0.01 * getSampleRate();
+    int readPositionDelayBuffer = writePositionDelayBuffer - getSampleRate();
     
     if (readPositionDelayBuffer < 0){
         readPositionDelayBuffer += delayBufferSize;
