@@ -6,6 +6,7 @@
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
-!.vscode/Launch.json
+!.vscode/launch.json
+!.vscode/c_cpp_properties.json
 !.vscode/extensions.json
 *.code-workspace
