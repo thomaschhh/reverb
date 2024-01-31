@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <Delay.h>
 
 //==============================================================================
 /**
@@ -57,12 +58,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    void fillDelayBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData);
-    void readFromDelayBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData);
-    juce::AudioBuffer<float> delayBuffer;
-    int writePositionDelayBuffer;
-    float startGain;
-    float endGain;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReverbAudioProcessor)
+    Delay delayBuffer;
 };
