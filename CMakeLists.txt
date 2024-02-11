@@ -43,8 +43,10 @@ target_sources(${PROJECT_NAME}
     PRIVATE
         Source/PluginEditor.cpp
         Source/PluginProcessor.cpp
+        Source/Delay.cpp
         Include/PluginEditor.h      # add .h files for VSCs CMake Tools
-        Include/PluginProcessor.h)
+        Include/PluginProcessor.h
+        Include/Delay.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/Include")
 

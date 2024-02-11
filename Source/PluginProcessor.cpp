@@ -22,6 +22,7 @@ ReverbAudioProcessor::ReverbAudioProcessor()
                        )
 #endif
 {
+    Delay delay;
 }
 
 ReverbAudioProcessor::~ReverbAudioProcessor()
@@ -92,8 +93,8 @@ void ReverbAudioProcessor::changeProgramName (int index, const juce::String& new
 
 //==============================================================================
 void ReverbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{    
-    Delay delay;
+{ 
+    delay.delayBufferSize = sampleRate * delay.delayDurSec * 2;
     delay.delayBuffer.setSize(getTotalNumOutputChannels(), delay.delayBufferSize);
 }
 
@@ -139,19 +140,16 @@ void ReverbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         buffer.clear (i, 0, buffer.getNumSamples());
     
     int bufferSize = buffer.getNumSamples();
-    int delayBufferSize = delay.getNumSamples();
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
         
-        delay.fillDelayBuffer(channel, bufferSize, delayBufferSize, channelData);
-        delay.readFromDelayBuffer(buffer, delayBuffer, channel, bufferSize, delayBufferSize, channelData);
-        delay.fillDelayBuffer(channel, bufferSize, delayBufferSize, channelData);
+        delay.fillDelayBuffer(channel, bufferSize, channelData);
+        delay.readFromDelayBuffer(buffer, channel, bufferSize, channelData);
+        delay.fillDelayBuffer(channel, bufferSize, channelData);
     }
-    
-    delay.writePositionDelayBuffer += bufferSize;
-    delay.writePositionDelayBuffer %= delayBufferSize;  // ensure to stay in bounds of bufferSize, wrap around in circular buffer
+    delay.updateWritePosition(bufferSize);
 }
 
 //==============================================================================

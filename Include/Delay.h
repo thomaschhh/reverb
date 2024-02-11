@@ -5,13 +5,15 @@
 class Delay 
 {
 public:
-    Delay() : writePositionDelayBuffer {0}, startGain {0.1f}, endGain {0.7f}, delayBufferSize {2}{};
+    Delay(int writePositionDelayBuffer = 0, float startGain = 0.1f, float endGain = 0.7f, int delayDurSec = 2);
     ~Delay();
 
-    void fillDelayBuffer(int channel, int bufferSize, int delayBufferSize, float* channelData);
-    void readFromDelayBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel, int bufferSize, int delayBufferSize, float* channelData);
+    void fillDelayBuffer(int channel, int bufferSize, float* channelData);
+    void readFromDelayBuffer(juce::AudioBuffer<float>& buffer, int channel, int bufferSize, float* channelData);
+    void updateWritePosition(int bufferSize);
     
     juce::AudioBuffer<float> delayBuffer;
+    int delayDurSec;
     int delayBufferSize;
 private:
     int writePositionDelayBuffer;
