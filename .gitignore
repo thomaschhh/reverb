@@ -5,3 +5,4 @@
 # VS Code files
 .vscode/*
 *.code-workspace
+.editconfig
