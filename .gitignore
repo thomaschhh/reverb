@@ -4,9 +4,5 @@
 
 # VS Code files
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/c_cpp_properties.json
-!.vscode/extensions.json
 *.code-workspace
+.editorconfig
